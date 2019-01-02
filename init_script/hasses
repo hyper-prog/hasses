@@ -1,0 +1,50 @@
+#! /bin/bash
+### BEGIN INIT INFO
+# Provides:            hasses
+# Required-Start:      $remote_fs $syslog
+# Required-Stop:       $remote_fs $syslog
+# Default-Start:       2 3 4 5
+# Default-Stop:        0 1 6
+# Short-Description:   Start hasses daemon
+# Description:         Start up hasses, an asynchronous SSE server
+### END INIT INFO
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/local/bin/hasses
+PARAMETER_BUILDER=/usr/local/bin/build-hasses-parameters
+CONFIGFILE=/etc/hasses.conf
+DAEMONNAME=hasses
+
+PARAMETERS=`$PARAMETER_BUILDER`
+
+case "$1" in
+  start)
+       echo -n "Starting HASSES: "
+       $DAEMON $PARAMETERS
+       sleep 1;
+       (pidof $DAEMONNAME 2>&1 >/dev/null ) || echo "FAILED!";
+       echo "HASSES."
+       ;;
+  stop)
+       echo -n "Stopping HASSES:"
+       killall -s INT hasses
+       echo "stopped.";
+       ;;
+
+  restart|force-reload)
+       echo -n "Restarting HASSES: "
+       killall -s INT hasses
+       sleep 1;
+       $DAEMON $PARAMETERS
+       sleep 1;
+       (pidof $DAEMONNAME 2>&1 >/dev/null) || echo "FAILED!";
+       echo "done.";
+       ;;
+  *)
+	N=/etc/init.d/hasses-daemon
+	echo "Usage: $N {start|stop|restart}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

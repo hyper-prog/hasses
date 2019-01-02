@@ -1,0 +1,39 @@
+#!/usr/bin/perl -w
+
+# This script handles the parsing of the /etc/hasses.conf file
+# and prints the parameters
+
+use strict;
+
+my $params; 
+my $etchandle; 
+my $etcfile = "/etc/hasses.conf";
+my $conf_directives = {};
+
+if(open $etchandle, $etcfile)
+{
+    foreach my $line (<$etchandle>)
+    {
+        $line ||= "";
+        $line =~ s/(?<!\\)\#[^\#]*//g;
+        $line =~ s/\s+$//g;
+        $line =~ s/^\s+//g;
+        next unless $line;
+
+        if($line =~ /^[^\-]/)
+        {
+            my ($directive, $arg) = $line =~ /^(.*?)\s+(.*)/;
+            $conf_directives->{$directive}->($arg);
+            next;
+        }
+
+        push @$params, $line;
+    }
+
+}else{
+    $params = [];
+}
+
+$params = join " ", @$params;
+
+print "$params";
