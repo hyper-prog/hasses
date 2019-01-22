@@ -35,7 +35,22 @@ Require openssl development tools
 
     $make
     #make install
-    
+
+Docker images
+-------------
+Available an Alpine linux container with the configured hasses daemon:
+ Docker hub:
+
+- https://hub.docker.com/r/hyperprog/hassesdaemon
+
+ Downloadable (pullable) image name:
+ 
+    hyperprog/hassesdaemon
+
+The image expose the 8080 port to SSE connections 
+and the 8085 for control channel communication messages.
+The sse requests matches to the /sse locations by default.
+
  Acrhitecture
  ------------
  

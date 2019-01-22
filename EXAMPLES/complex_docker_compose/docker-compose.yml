@@ -1,7 +1,7 @@
 version: '3'
 services:
   hassesdaemon:
-    image: hyperprpgo/hassesdaemon
+    image: hyperprog/hassesdaemon
     container_name: hasses_srv
     restart: always
     ports:
