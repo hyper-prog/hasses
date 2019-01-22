@@ -1145,6 +1145,7 @@ void toLog(int level, const char * format, ...)
             va_start(args,format);
             vfprintf(stdout,format,args);
             va_end(args);
+            fflush(stdout);
         }
         else
         {

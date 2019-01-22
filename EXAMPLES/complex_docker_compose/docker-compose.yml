@@ -1,0 +1,24 @@
+version: '3'
+services:
+  hassesdaemon:
+    image: hyperprpgo/hassesdaemon
+    container_name: hasses_srv
+    restart: always
+    ports:
+      - "8080:8080"
+    logging:
+      options:
+        max-size: 5m
+  webchat:
+    image: hyperprog/codkepalpine
+    container_name: web_srv
+    restart: always
+    ports:
+      - "80:80"
+    logging:
+      options:
+        max-size: 5m
+    links:
+      - hassesdaemon
+    volumes:
+      - ./webchat/site:/var/www/localhost/htdocs/site
