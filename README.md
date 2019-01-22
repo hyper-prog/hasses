@@ -4,12 +4,23 @@ Hyper's async SSE (Server Sent Event) server
 ============================================
 
 Hasses is a small notification server achieve Server Sent Event (SSE) listener
-in a separate daemon. 
-It's written in C and it has asynchronous design to handle more clients in same thread. 
-It uses linux epoll() function. 
+in a separate daemon.
+It's written in C and it has asynchronous design to handle more clients in same thread.
+It uses linux epoll() function.
 
  - What is SSE: http://en.wikipedia.org/wiki/Server-sent_events
  - What is epoll (Asyncronous programming): http://en.wikipedia.org/wiki/Epoll
+
+Most SSE example uses server side codes holds a connection to each client.
+It is usually means a process/thread for each client connection,
+which is not optimal when the number of clients are rising.
+This daemon act as a minimal web server which suitable to handle SSE connections only,
+and can handle all incoming connections in one thread.
+The main web server environment (which serve the web pages) can send the notifications
+to the clients through a separate network connection or a FIFO file.
+The clients can connect to the hasses server with a special token(s),
+which are usable to address messages to a subset of clients or even one client.
+The daemon has a rich logging and client tracking possibility.
 
 Author
 ------

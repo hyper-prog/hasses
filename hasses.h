@@ -5,7 +5,7 @@
 #ifndef HASSES_HASSES_H
 #define HASSES_HASSES_H
 
-#define VERSION "1.01"
+#define VERSION "1.20"
 
 /* The client timeout check interval in seconds */ 
 #define CLIENT_CHK_TIME_INTERVAL  60
@@ -59,6 +59,16 @@ int commands(char *input);
 int get_reinit_allowed(void);
 void diffsec_to_str(int diff_sec,char *buffer,int max);
 void beforeExit(void);
-void parse_fifo_message(char *fm);
+void parse_comm_messages(char *fms);
+void parse_comm_message(char *fm);
 
+struct CommCli {
+    int fd;
+    struct CommCli *next;
+};
+
+void commclient_add(int fd);
+void commclient_del(int fd);
+int  commclient_check(int fd);
+void commclient_debug(void);
 #endif

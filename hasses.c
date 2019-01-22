@@ -65,6 +65,8 @@ int epoll_descriptor;
 time_t log_oldrawtime=1;
 char   log_timebuf[80];
 
+struct CommCli *commFirst = NULL; //First Communication client
+
 void beforeExit(void)
 {
     if(strlen(hsettings.pidfile) > 0)
@@ -96,7 +98,7 @@ int create_and_bind(int port)
     struct addrinfo *result, *rp;
     int s, sfd,optval=1;
 
-    toLog(2,"Create/bind listening socket...\n");
+    toLog(2,"Create/bind listening socket (%d)...\n",port);
     memset(&hints, 0, sizeof (struct addrinfo));
     hints.ai_family   = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
@@ -135,11 +137,11 @@ int create_and_bind(int port)
 
     if (rp == NULL)
     {
-        toLog(0,"Error, could not bind socket\n");
+        toLog(0,"Error, could not bind socket on port %d\n",port);
         return -1;
     }
     freeaddrinfo(result);
-    toLog(2,"Main socked created/binded.\n");
+    toLog(2,"Socked created/binded.\n");
     return sfd;
 }
 
@@ -158,7 +160,7 @@ int make_socket_non_blocking(int sfd)
     s = fcntl(sfd, F_SETFL, flags);
     if (s == -1)
     {
-        toLog(0,"Error, fcntl()  in make_socket_non_blocking (2)\n");
+        toLog(0,"Error, fcntl() in make_socket_non_blocking (2)\n");
         return 1;
     }
     return 0;
@@ -180,6 +182,19 @@ int close_client(int d)
     return 0;
 }
 
+int close_communication_client(int d)
+{
+    /* Closing the descriptor will make epoll remove it
+       from the set of descriptors which are monitored.
+       this below may unnecessary */
+    epoll_ctl(epoll_descriptor,EPOLL_CTL_DEL,d,NULL);
+
+    close(d);
+    commclient_del(d);
+    toLog(2,"Closed communication connection <%d>\n",client_count(),d);
+    return 0;
+}
+
 int printversion(void)
 {
     printf("Hyper's async SSE (Server Sent Event) server\n"
@@ -193,11 +208,12 @@ int printversion(void)
 int printhelp(void)
 {
     printf("Hyper's async SSE (Server Sent Event) server\n"
-           "Usage:\n hasses  -p=<PORT> -murl=<MATCHING_URL> -fifo=<FIFOFILE> \n"
-                   "        [-q|-debug] [-l=<LOGFILE>] [-pidfile=<PIDFILE>] [-ra] [-user=<USER>]\n"
+           "Usage:\n hasses -p=<SSE_PORT> -murl=<MATCHING_URL>\n"
+                   "        [-cp=<COMM_PORT>] [-fifo=<FIFOFILE>]\n"
+                   "        [-q|-debug] [-l=<LOGFILE>] [-pidfile=<PIDFILE>]\n"
                    "        [-ssl] [-cert-file=<PEMFILE>] [-privatekey-file=<KEYFILE>]\n"
-                   "        [-cors-base=<URL>] [-nodaemon]\n"
-           "Commands on fifo:\n"
+                   "        [-cors-base=<URL>] [-ra] [-user=<USER>] [-nodaemon]\n"
+           "Commands on communication channel or fifo file:\n"
            "  \"status\" - Print status/statistics to the log\n"
            "  \"clientlist\" - List clients to the log\n"
            "  \"loglevel_quiet\" - Set loglevel to minimal\n"
@@ -295,9 +311,11 @@ int my_cio_low_write(struct CliConn *client,char *buffer,int length)
 int main(int argi,char **argc)
 {
     int s;
-    int sfd;
+    int sfd = -1;
+    int commfd = -1;
 
     int port = 0;
+    int commport = 0;
 
     hsettings.loglevel = 1;
     hsettings.use_ssl = 0;
@@ -379,6 +397,12 @@ int main(int argi,char **argc)
                 continue;
         }
 
+        if(!strncmp(argc[p],"-cp=",4))
+        {
+            if(sscanf(argc[p]+4,"%d",&commport) == 1 && commport > 0)
+                continue;
+        }
+
         if(!strncmp(argc[p],"-l=",3))
         {
             strncpy(hsettings.logfile,argc[p]+3,128);
@@ -435,15 +459,16 @@ int main(int argi,char **argc)
     }
 
     if(strlen(hsettings.match_url) == 0 ||
-       strlen(hsettings.fifofile) == 0  ||
+       (strlen(hsettings.fifofile) == 0 && commport == 0) || 
        port == 0 )
     {
         printhelp();
         return 0;
     }
 
-    if(hsettings.logfile[0] != '/' || hsettings.fifofile[0] != '/' ||
-       (strlen(hsettings.pidfile) > 0 && hsettings.pidfile[0] != '/')) 
+    if(hsettings.logfile[0] != '/' || 
+       (strlen(hsettings.fifofile) > 0 && hsettings.fifofile[0] != '/') ||
+       (strlen(hsettings.pidfile) > 0 && hsettings.pidfile[0] != '/'))
     {
         fprintf(stderr,"WARNING: Use absolute path to specify fifo, log or pid files!\n");
         return 0;
@@ -457,8 +482,10 @@ int main(int argi,char **argc)
         toLog(2,"Parameters:\n");
         toLog(2," loglevel: %d\n",hsettings.loglevel);
         toLog(2," Match url: %s\n",hsettings.match_url);
-        toLog(2," TCP Port: %d\n",port);
-        toLog(2," Fifo file: %s\n",hsettings.fifofile);
+        toLog(2," TCP Port (SSE): %d\n",port);
+        if(commport > 0)
+            toLog(2," TCP Port (Communication): %d\n",commport);
+        toLog(2," Fifo file: %s\n",strlen(hsettings.fifofile) > 0 ? hsettings.fifofile : "-none-");
         toLog(2," Mode: %s\n",(hsettings.use_ssl?"SSL (https)":"Normal (http)"));
         if(hsettings.use_ssl)
         {
@@ -472,8 +499,10 @@ int main(int argi,char **argc)
         printf("Parameters:\n");
         printf(" loglevel: %d\n",hsettings.loglevel);
         printf(" Match url: %s\n",hsettings.match_url);
-        printf(" TCP Port: %d\n",port);
-        printf(" Fifo file: %s\n",hsettings.fifofile);
+        printf(" TCP Port (SSE): %d\n",port);
+        if(commport > 0)
+            printf(" TCP Port (Communication): %d\n",commport);
+        printf(" Fifo file: %s\n",strlen(hsettings.fifofile) > 0 ? hsettings.fifofile : "-none-");
         printf(" Mode: %s\n",(hsettings.use_ssl?"SSL (https)":"Normal (http)"));
         if(hsettings.use_ssl)
         {
@@ -534,8 +563,9 @@ int main(int argi,char **argc)
 
     attach_signal_handler();
 
-    int fifo;
-    fifo = create_open_fifo(hsettings.fifofile);
+    int fifo = -1;
+    if(strlen(hsettings.fifofile) > 0)
+        fifo = create_open_fifo(hsettings.fifofile);
 
     struct epoll_event event;
     struct epoll_event *events;
@@ -555,6 +585,7 @@ int main(int argi,char **argc)
         exit(1);
     }
 
+    toLog(2,"Open SSE port to listen...\n");
     sfd = create_and_bind(port);
     if (sfd == -1)
     {
@@ -562,7 +593,6 @@ int main(int argi,char **argc)
         beforeExit();
         exit(1);
     }
-
     s = make_socket_non_blocking(sfd);
     if(s == -1)
     {
@@ -570,13 +600,38 @@ int main(int argi,char **argc)
         beforeExit();
         exit(1);
     }
-
     s = listen (sfd, SOMAXCONN);
     if(s == -1)
     {
         toLog(0,"Error, listen() failure. Exiting...\n");
         beforeExit();
         exit(1);
+    }
+
+    if(commport > 0)
+    {
+        toLog(2,"Open communication port to listen...\n");
+        commfd = create_and_bind(commport);
+        if (commfd == -1)
+        {
+            toLog(0,"Exiting due to previous error...\n");
+            beforeExit();
+            exit(1);
+        }
+        s = make_socket_non_blocking(commfd);
+        if(s == -1)
+        {
+            toLog(0,"Exiting due to previous error...\n");
+            beforeExit();
+            exit(1);
+        }
+        s = listen (commfd, SOMAXCONN);
+        if(s == -1)
+        {
+            toLog(0,"Error, listen() failure. Exiting...\n");
+            beforeExit();
+            exit(1);
+        }
     }
 
     toLog(2,"Creating epoll...\n");
@@ -588,14 +643,17 @@ int main(int argi,char **argc)
         exit(1);
     }
 
-    event.data.fd = fifo;
-    event.events = EPOLLIN | EPOLLET;
-    s = epoll_ctl(epoll_descriptor, EPOLL_CTL_ADD, fifo, &event);
-    if(s == -1)
+    if(fifo >= 0)
     {
-        toLog(0,"Error, epoll_ctl() add fifo failure (1) Exiting...\n");
-        beforeExit();
-        exit(1);
+        event.data.fd = fifo;
+        event.events = EPOLLIN | EPOLLET;
+        s = epoll_ctl(epoll_descriptor, EPOLL_CTL_ADD, fifo, &event);
+        if(s == -1)
+        {
+            toLog(0,"Error, epoll_ctl() add fifo failure (1) Exiting...\n");
+            beforeExit();
+            exit(1);
+        }
     }
 
     event.data.fd = sfd;
@@ -603,9 +661,22 @@ int main(int argi,char **argc)
     s = epoll_ctl(epoll_descriptor, EPOLL_CTL_ADD, sfd, &event);
     if(s == -1)
     {
-        toLog(0,"Error, epoll_ctl() add main socket failure (2) Exiting...\n");
+        toLog(0,"Error, epoll_ctl() add sse socket failure (2) Exiting...\n");
         beforeExit();
         exit(1);
+    }
+
+    if(commfd >= 0)
+    {
+        event.data.fd = commfd;
+        event.events = EPOLLIN | EPOLLET;
+        s = epoll_ctl(epoll_descriptor, EPOLL_CTL_ADD, commfd, &event);
+        if(s == -1)
+        {
+            toLog(0,"Error, epoll_ctl() add communication socket failure (3) Exiting...\n");
+            beforeExit();
+            exit(1);
+        }
     }
 
     toLog(2,"Epoll created.\n");
@@ -629,8 +700,17 @@ int main(int argi,char **argc)
             {
                 /* An error has occured on this fd, or the socket is not
                    ready for reading (why were we notified then?) */
-                toLog(1, "Client HUP/ERR or gone, Closing...\n");
-                close_client(events[i].data.fd);
+
+                if(commclient_check(events[i].data.fd)) //communication client
+                {
+                    toLog(2,"Communication client HUP/ERR or gone, Closing...\n");
+                    close_communication_client(events[i].data.fd);
+                }
+                else //sse client
+                {
+                    toLog(1, "Sse client HUP/ERR or gone, Closing...\n");
+                    close_client(events[i].data.fd);
+                }
                 continue;
             }
             else if (sfd == events[i].data.fd)
@@ -705,9 +785,74 @@ int main(int argi,char **argc)
                 }
                 continue;
             }
+            else if (commfd == events[i].data.fd)
+            {
+                /* We have a notification on the communication listening socket, which
+                   means one or more incoming connections for internal communication. */
+                while (1)
+                {
+                    struct sockaddr in_addr;
+                    socklen_t in_len;
+                    int infd;
+                    char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+
+                    in_len = sizeof(in_addr);
+                    infd = accept(commfd, &in_addr, &in_len);
+                    if(infd == -1)
+                    {
+                        if ((errno == EAGAIN) ||
+                            (errno == EWOULDBLOCK))
+                        {
+                            /* We have processed all incoming connections. */
+                            break;
+                        }
+                        else
+                        {
+                            toLog(1, "Error, accept() failure!\n");
+                            break;
+                        }
+                    }
+
+                    if(hsettings.loglevel >= 2)
+                    {
+                        s = getnameinfo (&in_addr, in_len,
+                                         hbuf, sizeof hbuf,
+                                         sbuf, sizeof sbuf,
+                                         NI_NUMERICHOST | NI_NUMERICSERV);
+                        if(s == 0)
+                            toLog(2,"Communication connect from %s on port %s as <%d>\n",hbuf,sbuf,infd);
+                        else
+                        {
+                            toLog(1,"Error in getnameinfo() <%d>\n",infd);
+                        }
+                    }
+
+                    /* Make the incoming socket non-blocking and add it to the
+                       list of fds to monitor. */
+                    s = make_socket_non_blocking(infd);
+                    if (s == -1)
+                    {
+                        toLog(1,"Cannot set new accepted socket to non blocking. I will close it!\n");
+                        close(infd);
+                        break;
+                    }
+
+                    event.data.fd = infd;
+                    event.events = EPOLLIN | EPOLLET;
+                    s = epoll_ctl(epoll_descriptor, EPOLL_CTL_ADD, infd, &event);
+                    if (s == -1)
+                    {
+                        toLog(0,"Error, epoll_ctl() add failure (3)\n");
+                        beforeExit();
+                        exit(1);
+                    }
+
+                    commclient_add(infd);
+                }
+                continue;
+            }
             else if (fifo == events[i].data.fd)
             {
-                toLog(2,"*");
                 input[0] = '\0';
                 char *input_p = input;
                 while(1)
@@ -734,19 +879,8 @@ int main(int argi,char **argc)
                 }
 
                 chop(input);
-                toLog(2,"FIFO received message: \"%s\"\n",input);
-
-                //split by delimiter ;
-                char *in_part=input;
-                int ii,input_length = strlen(input);
-                for(ii=0;ii<input_length;++ii)
-                    if(input[ii] == ';')
-                    {
-                        input[ii] = '\0';
-                        parse_fifo_message(in_part);
-                        in_part = input + ii + 1;
-                    }
-                parse_fifo_message(in_part);
+                toLog(2,"#FIFO received message: \"%s\"\n",input);
+                parse_comm_messages(input);
             }
             else
             {
@@ -781,19 +915,35 @@ int main(int argi,char **argc)
                         break;
                     }
                     fullcount += count;
-                    
                     input_p = input_p + count;
                 }
-                input[fullcount]='\0';                
+                input[fullcount]='\0';
 
-                if(done)
+                if(commclient_check(events[i].data.fd)) //communication client
                 {
-                    toLog(2,"Connection closed by peer:\n");
-                    close_client(events[i].data.fd);
+                    if(done)
+                    {
+                        toLog(2,"Communication connection closed by peer:\n");
+                        close_communication_client(events[i].data.fd);
+                    }
+                    else
+                    {
+                        chop(input);
+                        toLog(2,"#COMM-TCP received message: \"%s\"\n",input);
+                        parse_comm_messages(input);
+                    }
                 }
-                else
+                else //sse client
                 {
-                    cio_low_read(client_get(events[i].data.fd),input,fullcount);
+                    if(done)
+                    {
+                        toLog(2,"Connection closed by peer:\n");
+                        close_client(events[i].data.fd);
+                    }
+                    else
+                    {
+                        cio_low_read(client_get(events[i].data.fd),input,fullcount);
+                    }
                 }
             }
         }
@@ -804,7 +954,77 @@ int main(int argi,char **argc)
     return 0;
 }
 
-void parse_fifo_message(char *fm)
+void commclient_add(int fd)
+{
+    struct CommCli *n;
+    struct CommCli *ccli = (struct CommCli *)malloc(sizeof(struct CommCli));
+    ccli->fd = fd;
+    ccli->next = NULL;
+    if(commFirst == NULL)
+        commFirst = ccli;
+    else
+    {
+        for(n = commFirst;n->next != NULL;n = n->next);
+        n->next = ccli;
+    }
+}
+
+void commclient_del(int fd)
+{
+    struct CommCli *n;
+    if(commFirst != NULL)
+    {
+        if(commFirst->fd == fd)
+        {
+            struct CommCli *tdel = commFirst;
+            commFirst = commFirst->next;
+            free(tdel);
+            return;
+        }
+        for(n = commFirst;n->next != NULL;n = n->next)
+            if(n->next->fd == fd)
+            {
+                struct CommCli *tdel = n->next;
+                n->next = n->next->next;
+                free(tdel);
+                return;
+            }
+    }
+}
+
+void commclient_debug(void)
+{
+    struct CommCli *n;
+    for(n = commFirst;n != NULL;n = n->next)
+        toLog(2,"%d->",n->fd);
+    toLog(2,"NULL\n");
+}
+
+int commclient_check(int fd)
+{
+    struct CommCli *n;
+    for(n = commFirst;n != NULL;n = n->next)
+        if(n->fd == fd)
+            return 1;
+    return 0;
+}
+
+//split by delimiter ; and call parse_comm_message on parts
+void parse_comm_messages(char *fms)
+{
+    char *in_part=fms;
+    int ii,input_length = strlen(fms);
+    for(ii=0;ii<input_length;++ii)
+        if(fms[ii] == ';')
+        {
+            fms[ii] = '\0';
+            parse_comm_message(in_part);
+            in_part = fms + ii + 1;
+        }
+    parse_comm_message(in_part);
+}
+
+void parse_comm_message(char *fm)
 {
     if(strlen(fm) == 0)
         return;
@@ -973,5 +1193,4 @@ void diffsec_to_str(int diff_sec,char *buffer,int max)
     else
         snprintf(buffer,max,"%02d:%02d:%02d",h,m,s);
 }
-
 //end.

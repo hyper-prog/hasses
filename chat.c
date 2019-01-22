@@ -362,14 +362,14 @@ int sendmessages(char *buf)
     t = strtok(buf,"=");
     if(t == NULL || strlen(t) > 32)
     {
-        toLog(1,"Wrong formatted message from FIFO (1), ignored.\n");
+        toLog(1,"Wrong formatted message from communication channel (1), ignored.\n");
         return 1;
     }
     strncpy(token,t,32);
     t = strtok(NULL,"=");
     if(t == NULL)
     {
-        toLog(1,"Wrong formatted message from FIFO (2), ignored.\n");
+        toLog(1,"Wrong formatted message from communication channel (2), ignored.\n");
         return 1;
     }
 
@@ -384,7 +384,7 @@ int sendmessages(char *buf)
     {
         if(mm!=32 && mr<mm)
         {
-            toLog(1,"Wrong formatted message from FIFO (3), ignored.\n");
+            toLog(1,"Wrong formatted message from communication channel (3), ignored.\n");
             return 1;
         }
         strncpy(rejectId,token+mr+1,62);
