@@ -141,7 +141,7 @@ int create_and_bind(int port)
         return -1;
     }
     freeaddrinfo(result);
-    toLog(2,"Socked created/binded.\n");
+    toLog(2,"Socket created and bound.\n");
     return sfd;
 }
 
@@ -178,7 +178,7 @@ int close_client(int d)
 
     //Remove from my list
     client_del(d);
-    toLog(1,"Closed connection (Leaved clients: %d) <%d>\n",client_count(),d);
+    toLog(1,"Closed connection (Remaining clients: %d) <%d>\n",client_count(),d);
     return 0;
 }
 
@@ -274,7 +274,7 @@ int create_open_fifo(const char *fifofile)
     s = make_socket_non_blocking (fifo);
     if(s != 0)
     {
-        toLog(0,"Cannot setup fifo devide, Exiting...\n");
+        toLog(0,"Cannot setup fifo device, Exiting...\n");
         beforeExit();
         exit(1);
     }
@@ -530,7 +530,7 @@ int main(int argi,char **argc)
     else
     {
         toLog(2,"\nWARNING: Daemon mode is disabled by -nodaemon switch!\n"
-                "All messages writed to the standard output!\n"
+                "All messages written to the standard output!\n"
                 "THE HASSES DOES NOT USE THE LOG FILE!\n\n");
     }
 
@@ -703,12 +703,12 @@ int main(int argi,char **argc)
 
                 if(commclient_check(events[i].data.fd)) //communication client
                 {
-                    toLog(2,"Communication client HUP/ERR or gone, Closing...\n");
+                    toLog(2,"Communication client HUP/ERR or shutdown, Closing...\n");
                     close_communication_client(events[i].data.fd);
                 }
                 else //sse client
                 {
-                    toLog(1, "Sse client HUP/ERR or gone, Closing...\n");
+                    toLog(1, "SSE client HUP/ERR or shutdown, Closing...\n");
                     close_client(events[i].data.fd);
                 }
                 continue;
@@ -757,7 +757,7 @@ int main(int argi,char **argc)
                     s = make_socket_non_blocking(infd);
                     if (s == -1)
                     {
-                        toLog(1,"Cannot set new accepted socket to non blocking. I will close it!\n");
+                        toLog(1,"Cannot set new accepted socket to non blocking. Closing socket!\n");
                         close(infd);
                         break;
                     }
@@ -832,7 +832,7 @@ int main(int argi,char **argc)
                     s = make_socket_non_blocking(infd);
                     if (s == -1)
                     {
-                        toLog(1,"Cannot set new accepted socket to non blocking. I will close it!\n");
+                        toLog(1,"Cannot set new accepted socket to non blocking. Closing socket!\n");
                         close(infd);
                         break;
                     }

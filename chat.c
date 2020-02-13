@@ -230,7 +230,7 @@ int chat_received(struct CliConn *client,char *message,const char *url_to_handle
             return 0;
         }
 
-        toLog(2,"Seems to sse request (parameter:%s)\n",par);
+        toLog(2,"Seems to be SSE request (parameter:%s)\n",par);
         if(chat_parseparam(client,par) == 0)
         {
             chat_send_handshake(client);
