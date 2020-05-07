@@ -34,6 +34,6 @@ int cio_low_read(struct CliConn *client,char *buffer,int length);
 void cio_low_write_SET(int (*c)(struct CliConn *,char *,int));
 
 int cio_info_text(struct CliConn *client,char *buffer,int maxlen);
-    
+
 #endif
 //end.

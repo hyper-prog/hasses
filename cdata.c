@@ -272,7 +272,7 @@ void client_subscribe_add(struct CliConn *cli,char *ss)
     }
     ns = (struct CliSubsribe *)malloc(sizeof(struct CliSubsribe));
     ns->next = NULL;
-    strncpy(ns->token,ss,32);
+    strncpy(ns->token,ss,31);
 
     if(cli->subs == NULL)
         cli->subs = ns;

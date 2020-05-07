@@ -25,7 +25,7 @@ struct CliConn
     int    descr;     //socket desctiptor
     void   *cio;      //cio stuff
 
-    char   info[30];  //ip & port
+    char   info[64];  //ip & port
     char   agent[192]; //user agent
     char   err;       //Error status
     time_t created;   //Creation time (reset on reinit) TTL wokrs on this.

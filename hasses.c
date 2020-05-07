@@ -387,7 +387,7 @@ int main(int argi,char **argc)
 
         if(!strncmp(argc[p],"-murl=",6))
         {
-            strncpy(hsettings.match_url,argc[p]+6,64);
+            strncpy(hsettings.match_url,argc[p]+6,63);
             continue;
         }
 
@@ -405,43 +405,43 @@ int main(int argi,char **argc)
 
         if(!strncmp(argc[p],"-l=",3))
         {
-            strncpy(hsettings.logfile,argc[p]+3,128);
+            strncpy(hsettings.logfile,argc[p]+3,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-fifo=",6))
         {
-            strncpy(hsettings.fifofile,argc[p]+6,128);
+            strncpy(hsettings.fifofile,argc[p]+6,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-pidfile=",9))
         {
-            strncpy(hsettings.pidfile,argc[p]+9,128);
+            strncpy(hsettings.pidfile,argc[p]+9,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-cert-file=",11))
         {
-            strncpy(hsettings.certfile,argc[p]+11,128);
+            strncpy(hsettings.certfile,argc[p]+11,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-privatekey-file=",17))
         {
-            strncpy(hsettings.pkeyfile,argc[p]+17,128);
+            strncpy(hsettings.pkeyfile,argc[p]+17,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-cors-base=",11))
         {
-            strncpy(hsettings.corsbase,argc[p]+11,128);
+            strncpy(hsettings.corsbase,argc[p]+11,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-user=",6))
         {
-            strncpy(hsettings.paramuser,argc[p]+6,64);
+            strncpy(hsettings.paramuser,argc[p]+6,63);
             hsettings.paramuid = name_to_uid(hsettings.paramuser);
             if(hsettings.paramuid == -1)
             {
@@ -773,9 +773,11 @@ int main(int argi,char **argc)
                     }
 
                     //Add to my list
-                    int ccount;
+                    int ccount,sn_r;
                     client_add(infd);
-                    snprintf(client_current()->info,30,"%s:%s",hbuf,sbuf);
+                    sn_r =  snprintf(client_current()->info,63,"%s:%s",hbuf,sbuf);
+                    if(sn_r < 0)
+                      strcpy(client_current()->info,"truncated"); //probably never happend that ip and port is greater than 63
                     client_current()->status = STATUS_NEW;
 
                     ccount = client_count();
@@ -924,6 +926,12 @@ int main(int argi,char **argc)
                     if(done)
                     {
                         toLog(2,"Communication connection closed by peer:\n");
+                        if(strlen(input) > 3)
+                        {
+                            chop(input);
+                            toLog(2,"#COMM-TCP last received message: \"%s\"\n",input);
+                            parse_comm_messages(input);
+                        }
                         close_communication_client(events[i].data.fd);
                     }
                     else
