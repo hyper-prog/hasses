@@ -51,7 +51,7 @@ The image expose the 8080 port to SSE connections
 and the 8085 for control channel communication messages.
 The sse requests matches to the /sse locations by default.
 
- Acrhitecture
+ Architecture
  ------------
  
  ![Hasses Arch](https://raw.githubusercontent.com/hyper-prog/hasses/master/images/architecture.png)
