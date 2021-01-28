@@ -5,7 +5,7 @@
 #ifndef HASSES_CHAT_H
 #define HASSES_CHAT_H
 
-struct CliConn *client;
+struct CliConn;
 struct Hasses_Settings;
 struct Hasses_Statistics;
 

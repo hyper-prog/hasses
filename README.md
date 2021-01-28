@@ -67,7 +67,7 @@ The sse requests matches to the /sse locations by default.
     #a2enmod proxy_http
 
     To the enabled site:
-    
+
     ProxyPreserveHost On
 	  ProxyPass /sseeventprovider http://0.0.0.0:8080/sseeventprovider
 	  ProxyPassReverse /sseeventprovider http://0.0.0.0:8080/sseeventprovider
@@ -82,7 +82,7 @@ To the enabled site outside the "server" section:
         keepalive 3200;
     }
 
-To the enabled site inside the "server" section:        
+To the enabled site inside the "server" section:
 
     location /sseeventprovider {
         proxy_buffering off;
@@ -93,7 +93,7 @@ To the enabled site inside the "server" section:
         chunked_transfer_encoding on;
         proxy_pass http://ssebackend;
     }
-    
+
 
  Debugging / Troubleshooting
  ---------------------------
