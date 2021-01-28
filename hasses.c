@@ -77,7 +77,7 @@ void beforeExit(void)
 void sigint_handler(int sig)
 {
     beforeExit();
-    toLog(0,"Received INT signal, Exiting...\n");
+    toLog(0,"Received INT/TERM signal, Exiting...\n");
     exit(0);
 }
 
@@ -237,6 +237,12 @@ void attach_signal_handler(void)
     sigemptyset(&sa.sa_mask);
 
     if(sigaction(SIGINT, &sa, NULL) == -1)
+    {
+        toLog(0,"Error, Cannot set signal handler: sigaction() failure. Exiting...\n");
+        beforeExit();
+        exit(1);
+    }
+    if(sigaction(SIGTERM, &sa, NULL) == -1)
     {
         toLog(0,"Error, Cannot set signal handler: sigaction() failure. Exiting...\n");
         beforeExit();
