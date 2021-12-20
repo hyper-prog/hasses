@@ -329,15 +329,15 @@ int main(int argi,char **argc)
     hsettings.paramuid=-1;
     hsettings.nodaemon=0;
 
-    strcpy(hsettings.pidfile,"");
-    strcpy(hsettings.match_url,"");
-    strcpy(hsettings.fifofile,"");
-    strcpy(hsettings.logfile,"/var/log/hasses.log");
-    strcpy(hsettings.paramuser,"");
-    strcpy(hsettings.certfile,"");
-    strcpy(hsettings.pkeyfile,"");
-    strcpy(hsettings.corsbase,"*");
-    strcpy(hsettings.delimiter,";");
+    strlcpy(hsettings.pidfile,"",1);
+    strlcpy(hsettings.match_url,"",1);
+    strlcpy(hsettings.fifofile,"",1);
+    strlcpy(hsettings.logfile,"/var/log/hasses.log",20);
+    strlcpy(hsettings.paramuser,"",1);
+    strlcpy(hsettings.certfile,"",1);
+    strlcpy(hsettings.pkeyfile,"",1);
+    strlcpy(hsettings.corsbase,"*",2);
+    strlcpy(hsettings.delimiter,";",2);
 
     stats.startDaemon = 0;
     stats.maxclients  = 0;
@@ -346,7 +346,7 @@ int main(int argi,char **argc)
     stats.allmessage  = 0;
     stats.allsmessage = 0;
 
-    strcpy(log_timebuf,"error:");
+    strlcpy(log_timebuf,"error:",7);
 
     if(argi <= 1)
     {
@@ -394,7 +394,7 @@ int main(int argi,char **argc)
 
         if(!strncmp(argc[p],"-murl=",6))
         {
-            strncpy(hsettings.match_url,argc[p]+6,63);
+            strlcpy(hsettings.match_url,argc[p]+6,63);
             continue;
         }
 
@@ -412,49 +412,49 @@ int main(int argi,char **argc)
 
         if(!strncmp(argc[p],"-l=",3))
         {
-            strncpy(hsettings.logfile,argc[p]+3,127);
+            strlcpy(hsettings.logfile,argc[p]+3,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-fifo=",6))
         {
-            strncpy(hsettings.fifofile,argc[p]+6,127);
+            strlcpy(hsettings.fifofile,argc[p]+6,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-F=",3))
         {
-            strncpy(hsettings.delimiter,argc[p]+3,1);
+            strlcpy(hsettings.delimiter,argc[p]+3,1);
             continue;
         }
         
         if(!strncmp(argc[p],"-pidfile=",9))
         {
-            strncpy(hsettings.pidfile,argc[p]+9,127);
+            strlcpy(hsettings.pidfile,argc[p]+9,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-cert-file=",11))
         {
-            strncpy(hsettings.certfile,argc[p]+11,127);
+            strlcpy(hsettings.certfile,argc[p]+11,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-privatekey-file=",17))
         {
-            strncpy(hsettings.pkeyfile,argc[p]+17,127);
+            strlcpy(hsettings.pkeyfile,argc[p]+17,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-cors-base=",11))
         {
-            strncpy(hsettings.corsbase,argc[p]+11,127);
+            strlcpy(hsettings.corsbase,argc[p]+11,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-user=",6))
         {
-            strncpy(hsettings.paramuser,argc[p]+6,63);
+            strlcpy(hsettings.paramuser,argc[p]+6,63);
             hsettings.paramuid = name_to_uid(hsettings.paramuser);
             if(hsettings.paramuid == -1)
             {
@@ -791,7 +791,7 @@ int main(int argi,char **argc)
                     client_add(infd);
                     sn_r =  snprintf(client_current()->info,63,"%s:%s",hbuf,sbuf);
                     if(sn_r < 0)
-                      strcpy(client_current()->info,"truncated"); //probably never happend that ip and port is greater than 63
+                      strlcpy(client_current()->info,"truncated",10); //probably never happend that ip and port is greater than 63
                     client_current()->status = STATUS_NEW;
 
                     ccount = client_count();
