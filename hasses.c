@@ -1120,11 +1120,11 @@ int commands(char *input)
         toLog(0,"CORS-base url: %s\n",hsettings.corsbase);
         toLog(0,"Count of connected clients: %d\n",client_count());
         toLog(0,"Current registred SSE clients: %d\n",client_count_commstate());
-        toLog(0,"Maximum number of connections: %u\n",stats.maxclients);
-        toLog(0,"Total client handshaked: %u\n",stats.allclient);
-        toLog(0,"Total reinit connection: %u\n",stats.allreinit);
-        toLog(0,"Total message processed: %u\n",stats.allmessage);
-        toLog(0,"Total message sent: %u\n",stats.allsmessage);
+        toLog(0,"Maximum number of connections: %lu\n",stats.maxclients);
+        toLog(0,"Total client handshaked: %lu\n",stats.allclient);
+        toLog(0,"Total reinit connection: %lu\n",stats.allreinit);
+        toLog(0,"Total message processed: %lu\n",stats.allmessage);
+        toLog(0,"Total message sent: %lu\n",stats.allsmessage);
         toLog(0,"------------- end --------------\n");
         return 1;
     }
