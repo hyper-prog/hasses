@@ -209,7 +209,7 @@ int printhelp(void)
 {
     printf("Hyper's async SSE (Server Sent Event) server\n"
            "Usage:\n hasses -p=<SSE_PORT> -murl=<MATCHING_URL>\n"
-                   "        [-cp=<COMM_PORT>] [-fifo=<FIFOFILE>]\n"
+                   "        [-cp=<COMM_PORT>] [-fifo=<FIFOFILE>] [-F=<delimiter>]\n"
                    "        [-q|-debug] [-l=<LOGFILE>] [-pidfile=<PIDFILE>]\n"
                    "        [-ssl] [-cert-file=<PEMFILE>] [-privatekey-file=<KEYFILE>]\n"
                    "        [-cors-base=<URL>] [-ra] [-user=<USER>] [-nodaemon]\n"
@@ -337,6 +337,7 @@ int main(int argi,char **argc)
     strcpy(hsettings.certfile,"");
     strcpy(hsettings.pkeyfile,"");
     strcpy(hsettings.corsbase,"*");
+    strcpy(hsettings.delimiter,";");
 
     stats.startDaemon = 0;
     stats.maxclients  = 0;
@@ -421,6 +422,12 @@ int main(int argi,char **argc)
             continue;
         }
 
+        if(!strncmp(argc[p],"-F=",3))
+        {
+            strncpy(hsettings.delimiter,argc[p]+3,1);
+            continue;
+        }
+        
         if(!strncmp(argc[p],"-pidfile=",9))
         {
             strncpy(hsettings.pidfile,argc[p]+9,127);
@@ -491,7 +498,8 @@ int main(int argi,char **argc)
         toLog(2," TCP Port (SSE): %d\n",port);
         if(commport > 0)
             toLog(2," TCP Port (Communication): %d\n",commport);
-        toLog(2," Fifo file: %s\n",strlen(hsettings.fifofile) > 0 ? hsettings.fifofile : "-none-");
+        toLog(2," FIFO file: %s\n",strlen(hsettings.fifofile) > 0 ? hsettings.fifofile : "-none-");
+        toLog(2," Delimiter: %s\n",hsettings.delimiter);
         toLog(2," Mode: %s\n",(hsettings.use_ssl?"SSL (https)":"Normal (http)"));
         if(hsettings.use_ssl)
         {
@@ -1023,13 +1031,13 @@ int commclient_check(int fd)
     return 0;
 }
 
-//split by delimiter ; and call parse_comm_message on parts
+//split by delimiter hsettings.delimiter and call parse_comm_message on parts
 void parse_comm_messages(char *fms)
 {
     char *in_part=fms;
     int ii,input_length = strlen(fms);
     for(ii=0;ii<input_length;++ii)
-        if(fms[ii] == ';')
+        if(fms[ii] == *hsettings.delimiter)
         {
             fms[ii] = '\0';
             parse_comm_message(in_part);
