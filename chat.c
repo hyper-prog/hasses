@@ -303,7 +303,7 @@ int chat_received(struct CliConn *client,char *message,const char *url_to_handle
 int chat_parseparam(struct CliConn *client,char *parameters)
 {
     int i;
-    char *p,*st;
+    char *p;
 
     char id_par[69];
 
@@ -335,7 +335,7 @@ int chat_parseparam(struct CliConn *client,char *parameters)
         p = subs_par + 10;
         for(i=0;p[i] != '\0' && p[i] != '&' && p[i] != '\n' && p[i] != '\r';++i);
         p[i] = '\0';
-        st = strtok(p,"-");
+        char *st = strtok(p,"-");
         while(st != NULL)
         {
             toLog(2," + subscribe to: %s\n",st);
@@ -460,7 +460,7 @@ int get_pos(char *str,char c)
     return -1;
 }
 
-int emptyStr(char *str)
+int emptyStr(const char *str)
 {
     if(str[0] == '\0')
         return 1;

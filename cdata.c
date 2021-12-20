@@ -232,7 +232,6 @@ void client_list(int level)
 
 void client_subscribe_list(struct CliConn *cli,char *sbuf,int max)
 {
-    int tl;
     int left = max;
     char *br = sbuf;
     struct CliSubsribe *s = cli->subs;
@@ -253,7 +252,7 @@ void client_subscribe_list(struct CliConn *cli,char *sbuf,int max)
             --left;
             ++br;
         }
-        tl = strlen(s->token);
+        int tl = strlen(s->token);
         strncpy(br,s->token,left);
         br += tl;
         left -= tl;
@@ -307,13 +306,13 @@ int client_subscribe_exists(struct CliConn *cli,char *ss,int mmatch,char *reject
 
 void client_subscribe_clear(struct CliConn *cli)
 {
-    struct CliSubsribe *s,*del;
+    struct CliSubsribe *s;
 
     cli->allsubs = 0;
     s = cli->subs;
     while(s != NULL)
     {
-        del = s;
+        struct CliSubsribe *del = s;
         s = s->next;
         free(del);
     }

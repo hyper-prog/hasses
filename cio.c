@@ -173,10 +173,8 @@ int cio_low_read(struct CliConn *client,char *buffer,int length)
         if(cio_init_ssl(client))
             return 1;
 
-    char rio_buffer[MAX_READ_SIZE];
 
     int written = 0;
-    int read = 0;
 
     //Waiting data to be read by ssl
     if(length > 0)
@@ -214,8 +212,9 @@ int cio_low_read(struct CliConn *client,char *buffer,int length)
 
     if(SSL_is_init_finished(CIO(client)->ssl))
     {
+        char rio_buffer[MAX_READ_SIZE];
         int rv2;
-        read = SSL_read(CIO(client)->ssl, rio_buffer, sizeof(rio_buffer));
+        int read = SSL_read(CIO(client)->ssl, rio_buffer, sizeof(rio_buffer));
         if(read > 0)
         {
             rio_buffer[read]='\0';

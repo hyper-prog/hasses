@@ -26,7 +26,7 @@ int chat_send_options(struct CliConn *client);
 
 char *chop(char *str);
 int get_pos(char *str,char c);
-int emptyStr(char *str);
+int emptyStr(const char *str);
 char* nextNotWhitespace(char *str);
 int startWithStr(char *str,const char *pattern);
 

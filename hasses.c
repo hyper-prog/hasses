@@ -83,7 +83,7 @@ void sigint_handler(int sig)
 
 int name_to_uid(char const *name)
 {
-    if(name==NULL || strlen(name) <= 0)
+    if(name==NULL || strlen(name) == 0)
         return -1;
     struct passwd *pwd = getpwnam(name);
     if(pwd != NULL)
@@ -810,7 +810,6 @@ int main(int argi,char **argc)
                     struct sockaddr in_addr;
                     socklen_t in_len;
                     int infd;
-                    char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
 
                     in_len = sizeof(in_addr);
                     infd = accept(commfd, &in_addr, &in_len);
@@ -831,6 +830,7 @@ int main(int argi,char **argc)
 
                     if(hsettings.loglevel >= 2)
                     {
+                        char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
                         s = getnameinfo (&in_addr, in_len,
                                          hbuf, sizeof hbuf,
                                          sbuf, sizeof sbuf,
@@ -910,10 +910,9 @@ int main(int argi,char **argc)
                 char *input_p = input;
 
                 ssize_t fullcount=0;
-                ssize_t count;
                 while(1)
                 {
-                    count = read(events[i].data.fd,input_p, MAX_READ_SIZE-strlen(input));
+                    ssize_t count = read(events[i].data.fd,input_p, MAX_READ_SIZE-strlen(input));
                     if(count == -1)
                     {
                         /* If errno == EAGAIN, that means we have read all
@@ -1014,13 +1013,14 @@ void commclient_del(int fd)
     }
 }
 
-void commclient_debug(void)
-{
-    struct CommCli *n;
-    for(n = commFirst;n != NULL;n = n->next)
-        toLog(2,"%d->",n->fd);
-    toLog(2,"NULL\n");
-}
+//unused function
+// void commclient_debug(void)
+// {
+//     struct CommCli *n;
+//     for(n = commFirst;n != NULL;n = n->next)
+//         toLog(2,"%d->",n->fd);
+//     toLog(2,"NULL\n");
+// }
 
 int commclient_check(int fd)
 {

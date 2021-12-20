@@ -40,7 +40,7 @@ struct Hasses_Settings
     char certfile[128];
     char pkeyfile[128];
     char corsbase[128];
-    char delimiter[1];
+    char delimiter[2];
 };
 
 struct Hasses_Statistics
@@ -71,5 +71,5 @@ struct CommCli {
 void commclient_add(int fd);
 void commclient_del(int fd);
 int  commclient_check(int fd);
-void commclient_debug(void);
+// void commclient_debug(void);
 #endif
