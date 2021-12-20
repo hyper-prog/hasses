@@ -40,6 +40,7 @@ struct Hasses_Settings
     char certfile[128];
     char pkeyfile[128];
     char corsbase[128];
+    char delimiter[1];
 };
 
 struct Hasses_Statistics
