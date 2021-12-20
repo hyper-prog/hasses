@@ -63,7 +63,11 @@ int cio_init(int use_ssl,const char *certfile,const char *pkeyfile)
 
     SSL_load_error_strings(); // readable error messages
     SSL_library_init();       // initialize library
-    ssl_ctx = SSL_CTX_new(SSLv23_server_method()); // create context
+    ssl_ctx = SSL_CTX_new(TLS_server_method()); // create context
+    
+    if (ssl_ctx) {
+        SSL_CTX_set_min_proto_version(ssl_ctx, TLS1_2_VERSION);
+    }
 
     if(!SSL_CTX_use_certificate_file(ssl_ctx,certfile,SSL_FILETYPE_PEM))
     {
@@ -259,7 +263,7 @@ int cio_info_text(struct CliConn *client,char *buffer,int maxlen)
 {
     if(client->cio == NULL)
     {
-        strcpy(buffer,"");
+        strlcpy(buffer,"",1);
         return 0;
     }
     snprintf(buffer,maxlen,"SSL Status:%s Ver:%s Chiper:%s",
