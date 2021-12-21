@@ -424,7 +424,7 @@ int main(int argi,char **argc)
 
         if(!strncmp(argc[p],"-F=",3))
         {
-            strlcpy(hsettings.delimiter,argc[p]+3,1);
+            strlcpy(hsettings.delimiter,argc[p]+3,2);
             continue;
         }
         
@@ -509,23 +509,6 @@ int main(int argi,char **argc)
         toLog(2," Log file: %s\n",hsettings.logfile);
         toLog(2," Pid file: %s\n",hsettings.pidfile);
         toLog(2," Set daemon user: %s\n",hsettings.paramuser);
-
-        printf("Parameters:\n");
-        printf(" loglevel: %d\n",hsettings.loglevel);
-        printf(" Match url: %s\n",hsettings.match_url);
-        printf(" TCP Port (SSE): %d\n",port);
-        if(commport > 0)
-            printf(" TCP Port (Communication): %d\n",commport);
-        printf(" Fifo file: %s\n",strlen(hsettings.fifofile) > 0 ? hsettings.fifofile : "-none-");
-        printf(" Mode: %s\n",(hsettings.use_ssl?"SSL (https)":"Normal (http)"));
-        if(hsettings.use_ssl)
-        {
-            printf(" SSL Cert key: %s\n",hsettings.certfile);
-            printf(" SSL Prvt key: %s\n",hsettings.pkeyfile);
-        }
-        printf(" Log file: %s\n",hsettings.logfile);
-        printf(" Pid file: %s\n",hsettings.pidfile);
-        printf(" Set daemon user: %s\n",hsettings.paramuser);
         fflush(stdout);
     }
 
@@ -1034,17 +1017,15 @@ int commclient_check(int fd)
 //split by delimiter hsettings.delimiter and call parse_comm_message on parts
 void parse_comm_messages(char *fms)
 {
-    char *in_part=fms;
-    int ii,input_length = strlen(fms);
-    for(ii=0;ii<input_length;++ii)
-        if(fms[ii] == *hsettings.delimiter)
-        {
-            fms[ii] = '\0';
-            parse_comm_message(in_part);
-            in_part = fms + ii + 1;
-        }
-    parse_comm_message(in_part);
+    int length = strlen(fms);
+    for (int ii=0; length; ++ii) {
+        char *message = strsep(&fms, hsettings.delimiter);
+        if (message == NULL)
+            break;
+        parse_comm_message(message);
+    }
 }
+
 
 void parse_comm_message(char *fm)
 {
