@@ -27,6 +27,8 @@ jobs:
       uses: docker/metadata-action@v3
       with:
         images: hyperprog/hassesdaemon
+        tags: |
+              type=raw,value=latest
 
     - name: Build and push
       uses: docker/build-push-action@v2
