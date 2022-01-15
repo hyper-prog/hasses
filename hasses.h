@@ -5,7 +5,7 @@
 #ifndef HASSES_HASSES_H
 #define HASSES_HASSES_H
 
-#define VERSION "1.24"
+#define VERSION "1.25"
 
 /* The client timeout check interval in seconds */ 
 #define CLIENT_CHK_TIME_INTERVAL  60
@@ -40,7 +40,7 @@ struct Hasses_Settings
     char certfile[128];
     char pkeyfile[128];
     char corsbase[128];
-    char delimiter[1];
+    char delimiter[2];
 };
 
 struct Hasses_Statistics
@@ -53,6 +53,8 @@ struct Hasses_Statistics
     unsigned long allsmessage;
 };
 
+
+size_t h_strlcpy(char *dest, const char *src, size_t size);
 void toLog(int level, const char * format, ...);
 void checkTimeouts(void);
 int close_client(int d);

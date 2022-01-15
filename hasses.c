@@ -329,15 +329,15 @@ int main(int argi,char **argc)
     hsettings.paramuid=-1;
     hsettings.nodaemon=0;
 
-    strlcpy(hsettings.pidfile,"",1);
-    strlcpy(hsettings.match_url,"",1);
-    strlcpy(hsettings.fifofile,"",1);
-    strlcpy(hsettings.logfile,"/var/log/hasses.log",20);
-    strlcpy(hsettings.paramuser,"",1);
-    strlcpy(hsettings.certfile,"",1);
-    strlcpy(hsettings.pkeyfile,"",1);
-    strlcpy(hsettings.corsbase,"*",2);
-    strlcpy(hsettings.delimiter,";",2);
+    h_strlcpy(hsettings.pidfile,"",128);
+    h_strlcpy(hsettings.match_url,"",64);
+    h_strlcpy(hsettings.fifofile,"",128);
+    h_strlcpy(hsettings.logfile,"/var/log/hasses.log",128);
+    h_strlcpy(hsettings.paramuser,"",64);
+    h_strlcpy(hsettings.certfile,"",128);
+    h_strlcpy(hsettings.pkeyfile,"",128);
+    h_strlcpy(hsettings.corsbase,"*",128);
+    h_strlcpy(hsettings.delimiter,";",2);
 
     stats.startDaemon = 0;
     stats.maxclients  = 0;
@@ -346,7 +346,7 @@ int main(int argi,char **argc)
     stats.allmessage  = 0;
     stats.allsmessage = 0;
 
-    strlcpy(log_timebuf,"error:",7);
+    h_strlcpy(log_timebuf,"error:",80);
 
     if(argi <= 1)
     {
@@ -394,7 +394,7 @@ int main(int argi,char **argc)
 
         if(!strncmp(argc[p],"-murl=",6))
         {
-            strlcpy(hsettings.match_url,argc[p]+6,63);
+            h_strlcpy(hsettings.match_url,argc[p]+6,63);
             continue;
         }
 
@@ -412,49 +412,50 @@ int main(int argi,char **argc)
 
         if(!strncmp(argc[p],"-l=",3))
         {
-            strlcpy(hsettings.logfile,argc[p]+3,127);
+            h_strlcpy(hsettings.logfile,argc[p]+3,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-fifo=",6))
         {
-            strlcpy(hsettings.fifofile,argc[p]+6,127);
+            h_strlcpy(hsettings.fifofile,argc[p]+6,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-F=",3))
         {
-            strlcpy(hsettings.delimiter,argc[p]+3,1);
+            hsettings.delimiter[0] = argc[p][3];
+            hsettings.delimiter[1] = '\0';
             continue;
         }
-        
+
         if(!strncmp(argc[p],"-pidfile=",9))
         {
-            strlcpy(hsettings.pidfile,argc[p]+9,127);
+            h_strlcpy(hsettings.pidfile,argc[p]+9,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-cert-file=",11))
         {
-            strlcpy(hsettings.certfile,argc[p]+11,127);
+            h_strlcpy(hsettings.certfile,argc[p]+11,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-privatekey-file=",17))
         {
-            strlcpy(hsettings.pkeyfile,argc[p]+17,127);
+            h_strlcpy(hsettings.pkeyfile,argc[p]+17,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-cors-base=",11))
         {
-            strlcpy(hsettings.corsbase,argc[p]+11,127);
+            h_strlcpy(hsettings.corsbase,argc[p]+11,127);
             continue;
         }
 
         if(!strncmp(argc[p],"-user=",6))
         {
-            strlcpy(hsettings.paramuser,argc[p]+6,63);
+            h_strlcpy(hsettings.paramuser,argc[p]+6,63);
             hsettings.paramuid = name_to_uid(hsettings.paramuser);
             if(hsettings.paramuid == -1)
             {
@@ -789,9 +790,9 @@ int main(int argi,char **argc)
                     //Add to my list
                     int ccount,sn_r;
                     client_add(infd);
-                    sn_r =  snprintf(client_current()->info,63,"%s:%s",hbuf,sbuf);
+                    sn_r = snprintf(client_current()->info,63,"%s:%s",hbuf,sbuf);
                     if(sn_r < 0)
-                      strlcpy(client_current()->info,"truncated",10); //probably never happend that ip and port is greater than 63
+                      h_strlcpy(client_current()->info,"truncated",64); //probably never happend that ip and port is greater than 63
                     client_current()->status = STATUS_NEW;
 
                     ccount = client_count();
@@ -1037,7 +1038,7 @@ void parse_comm_messages(char *fms)
     char *in_part=fms;
     int ii,input_length = strlen(fms);
     for(ii=0;ii<input_length;++ii)
-        if(fms[ii] == *hsettings.delimiter)
+        if(fms[ii] == hsettings.delimiter[0])
         {
             fms[ii] = '\0';
             parse_comm_message(in_part);
@@ -1198,6 +1199,18 @@ void toLog(int level, const char * format, ...)
             fclose(logf);
         }
     }
+}
+
+size_t h_strlcpy(char *dest, const char *src, size_t size)
+{
+    size_t ret = strlen(src);
+
+    if (size) {
+        size_t len = (ret >= size) ? size - 1 : ret;
+        memcpy(dest, src, len);
+        dest[len] = '\0';
+    }
+    return ret;
 }
 
 void diffsec_to_str(int diff_sec,char *buffer,int max)

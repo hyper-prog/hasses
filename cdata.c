@@ -128,9 +128,9 @@ struct CliConn * client_add(int descr)
     newitem->subs = NULL;
     newitem->message = 0;
     newitem->reinit = 0;
-    strlcpy(newitem->info,"",1);
-    strlcpy(newitem->uniq_id,"",1);
-    strlcpy(newitem->agent,"",1);
+    h_strlcpy(newitem->info,"",64);
+    h_strlcpy(newitem->uniq_id,"",64);
+    h_strlcpy(newitem->agent,"",192);
     cursor.bank = bCurr;
     cursor.current = bCurr->next - 1;
     return newitem;
@@ -239,7 +239,7 @@ void client_subscribe_list(struct CliConn *cli,char *sbuf,int max)
     sbuf[0] = '\0';
     if(cli->allsubs)
     {
-        strlcpy(br,"*",left);
+        h_strlcpy(br,"*",left);
         --left;
         ++br;
     }
@@ -249,12 +249,12 @@ void client_subscribe_list(struct CliConn *cli,char *sbuf,int max)
             return;
         if(sbuf[0] != '\0')
         {
-            strlcpy(br,",",left);
+            h_strlcpy(br,",",left);
             --left;
             ++br;
         }
         tl = strlen(s->token);
-        strlcpy(br,s->token,left);
+        h_strlcpy(br,s->token,left);
         br += tl;
         left -= tl;
         s = s->next;
@@ -272,7 +272,7 @@ void client_subscribe_add(struct CliConn *cli,char *ss)
     }
     ns = (struct CliSubsribe *)malloc(sizeof(struct CliSubsribe));
     ns->next = NULL;
-    strlcpy(ns->token,ss,31);
+    h_strlcpy(ns->token,ss,31);
 
     if(cli->subs == NULL)
         cli->subs = ns;

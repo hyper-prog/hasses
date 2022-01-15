@@ -53,18 +53,18 @@ int cio_init(int use_ssl,const char *certfile,const char *pkeyfile)
         toLog(0,"SSL Error, you must set cio_high_read_callback and cio_low_write_callback functions!\n");
         return 1;
     }
-    
+
     no_ssl = !use_ssl;
-    
+
     if(no_ssl)
         return 0;
-    
+
     toLog(1,"Initialize SSL.\n");
 
     SSL_load_error_strings(); // readable error messages
     SSL_library_init();       // initialize library
     ssl_ctx = SSL_CTX_new(TLS_server_method()); // create context
-    
+
     if (ssl_ctx) {
         SSL_CTX_set_min_proto_version(ssl_ctx, TLS1_2_VERSION);
     }
@@ -263,7 +263,7 @@ int cio_info_text(struct CliConn *client,char *buffer,int maxlen)
 {
     if(client->cio == NULL)
     {
-        strlcpy(buffer,"",1);
+        strcpy(buffer,"");
         return 0;
     }
     snprintf(buffer,maxlen,"SSL Status:%s Ver:%s Chiper:%s",

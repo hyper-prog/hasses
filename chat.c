@@ -183,7 +183,7 @@ int chat_received(struct CliConn *client,char *message,const char *url_to_handle
                 if(*nextchar == '?')
                 {
                     urlmatch = URL_YES;
-                    strlcpy(par,nextchar+1,MAX_READ_SIZE-1);
+                    h_strlcpy(par,nextchar+1,MAX_READ_SIZE-1);
                 }
             }
             if(!strncmp(l,"* ",2))
@@ -199,7 +199,7 @@ int chat_received(struct CliConn *client,char *message,const char *url_to_handle
             if(!strncmp(l,"Connection: Keep-Alive",22))
                 keepalive = 1;
             if(startWithStr(l,"User-Agent:"))
-                strlcpy(client->agent,nextNotWhitespace(l),190);
+                h_strlcpy(client->agent,nextNotWhitespace(l),190);
         }
 
         l = strtok(NULL,"\n");
@@ -308,15 +308,15 @@ int chat_parseparam(struct CliConn *client,char *parameters)
     char id_par[69];
 
     char *param;
-    strlcpy(subs_par,"",1);
-    strlcpy(id_par,"",1);
+    h_strlcpy(subs_par,"",MAX_READ_SIZE);
+    h_strlcpy(id_par,"",69);
     param = strtok(parameters,"&");
     while(param != NULL)
     {
         if(strncmp(param,"subscribe=",10) == 0)
-            strlcpy(subs_par,param,MAX_READ_SIZE-1);
+            h_strlcpy(subs_par,param,MAX_READ_SIZE-1);
         if(strncmp(param,"id=",3) == 0)
-            strlcpy(id_par,param,68);
+            h_strlcpy(id_par,param,68);
         param = strtok(NULL,"&");
     }
 
@@ -326,7 +326,7 @@ int chat_parseparam(struct CliConn *client,char *parameters)
         p = id_par + 3;
         for(i=0;p[i] != '\0' && p[i] != '&' && p[i] != '\n' && p[i] != '\r' && i < 64;++i);
         p[i] = '\0';
-        strlcpy(client->uniq_id,p,62);
+        h_strlcpy(client->uniq_id,p,62);
     }
 
     //Examine subscribe parameter
@@ -358,14 +358,14 @@ int sendmessages(char *buf)
     char token[32];
     char rejectId[64];
 
-    strlcpy(rejectId,"",1);
+    h_strlcpy(rejectId,"",1);
     t = strtok(buf,"=");
     if(t == NULL || strlen(t) > 32)
     {
         toLog(1,"Wrong formatted message from communication channel (1), ignored.\n");
         return 1;
     }
-    strlcpy(token,t,32);
+    h_strlcpy(token,t,32);
     t = strtok(NULL,"=");
     if(t == NULL)
     {
@@ -387,7 +387,7 @@ int sendmessages(char *buf)
             toLog(1,"Wrong formatted message from communication channel (3), ignored.\n");
             return 1;
         }
-        strlcpy(rejectId,token+mr+1,62);
+        h_strlcpy(rejectId,token+mr+1,62);
         token[mr] = '\0';
     }
 
