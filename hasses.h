@@ -5,7 +5,7 @@
 #ifndef HASSES_HASSES_H
 #define HASSES_HASSES_H
 
-#define VERSION "1.25"
+#define VERSION "1.26"
 
 /* The client timeout check interval in seconds */ 
 #define CLIENT_CHK_TIME_INTERVAL  60

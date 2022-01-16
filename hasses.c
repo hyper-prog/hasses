@@ -209,7 +209,7 @@ int printhelp(void)
 {
     printf("Hyper's async SSE (Server Sent Event) server\n"
            "Usage:\n hasses -p=<SSE_PORT> -murl=<MATCHING_URL>\n"
-                   "        [-cp=<COMM_PORT>] [-fifo=<FIFOFILE>] [-F=<delimiter>]\n"
+                   "        [-cp=<COMM_PORT>] [-fifo=<FIFOFILE>] [-sep=<delimiter>]\n"
                    "        [-q|-debug] [-l=<LOGFILE>] [-pidfile=<PIDFILE>]\n"
                    "        [-ssl] [-cert-file=<PEMFILE>] [-privatekey-file=<KEYFILE>]\n"
                    "        [-cors-base=<URL>] [-ra] [-user=<USER>] [-nodaemon]\n"
@@ -392,68 +392,68 @@ int main(int argi,char **argc)
             continue;
         }
 
-        if(!strncmp(argc[p],"-murl=",6))
+        if(!strncmp(argc[p],"-murl=",6) && strlen(argc[p]) > 6)
         {
             h_strlcpy(hsettings.match_url,argc[p]+6,63);
             continue;
         }
 
-        if(!strncmp(argc[p],"-p=",3))
+        if(!strncmp(argc[p],"-p=",3) && strlen(argc[p]) > 3)
         {
             if(sscanf(argc[p]+3,"%d",&port) == 1 && port > 0)
                 continue;
         }
 
-        if(!strncmp(argc[p],"-cp=",4))
+        if(!strncmp(argc[p],"-cp=",4) && strlen(argc[p]) > 4)
         {
             if(sscanf(argc[p]+4,"%d",&commport) == 1 && commport > 0)
                 continue;
         }
 
-        if(!strncmp(argc[p],"-l=",3))
+        if(!strncmp(argc[p],"-l=",3) && strlen(argc[p]) > 3)
         {
             h_strlcpy(hsettings.logfile,argc[p]+3,127);
             continue;
         }
 
-        if(!strncmp(argc[p],"-fifo=",6))
+        if(!strncmp(argc[p],"-fifo=",6) && strlen(argc[p]) > 6)
         {
             h_strlcpy(hsettings.fifofile,argc[p]+6,127);
             continue;
         }
 
-        if(!strncmp(argc[p],"-F=",3))
+        if(!strncmp(argc[p],"-sep=",5) && strlen(argc[p]) > 5)
         {
-            hsettings.delimiter[0] = argc[p][3];
+            hsettings.delimiter[0] = argc[p][5];
             hsettings.delimiter[1] = '\0';
             continue;
         }
 
-        if(!strncmp(argc[p],"-pidfile=",9))
+        if(!strncmp(argc[p],"-pidfile=",9) && strlen(argc[p]) > 9)
         {
             h_strlcpy(hsettings.pidfile,argc[p]+9,127);
             continue;
         }
 
-        if(!strncmp(argc[p],"-cert-file=",11))
+        if(!strncmp(argc[p],"-cert-file=",11) && strlen(argc[p]) > 11)
         {
             h_strlcpy(hsettings.certfile,argc[p]+11,127);
             continue;
         }
 
-        if(!strncmp(argc[p],"-privatekey-file=",17))
+        if(!strncmp(argc[p],"-privatekey-file=",17) && strlen(argc[p]) > 17)
         {
             h_strlcpy(hsettings.pkeyfile,argc[p]+17,127);
             continue;
         }
 
-        if(!strncmp(argc[p],"-cors-base=",11))
+        if(!strncmp(argc[p],"-cors-base=",11) && strlen(argc[p]) > 11)
         {
             h_strlcpy(hsettings.corsbase,argc[p]+11,127);
             continue;
         }
 
-        if(!strncmp(argc[p],"-user=",6))
+        if(!strncmp(argc[p],"-user=",6) && strlen(argc[p]) > 6)
         {
             h_strlcpy(hsettings.paramuser,argc[p]+6,63);
             hsettings.paramuid = name_to_uid(hsettings.paramuser);
@@ -467,7 +467,7 @@ int main(int argi,char **argc)
 
         if(!strncmp(argc[p],"-",1))
         {
-            fprintf(stderr,"Error, unknown switch: \"%s\"\n",argc[p]);
+            fprintf(stderr,"Error, unknown switch or incorrect use: \"%s\"\n",argc[p]);
             return 1;
         }
     }
@@ -476,6 +476,7 @@ int main(int argi,char **argc)
        (strlen(hsettings.fifofile) == 0 && commport == 0) || 
        port == 0 )
     {
+        fprintf(stderr,"Error, Neither FIFO file nor communication port is specified!\n\n");
         printhelp();
         return 0;
     }
