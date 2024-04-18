@@ -198,7 +198,7 @@ int client_count_commstate(void)
     return i;
 }
 
-void client_list(int level)
+void client_list(int level, int fd)
 {
     char sbuf[512];
     char ciobuf[512];
@@ -207,7 +207,7 @@ void client_list(int level)
     time_t now=time(NULL);
 
     int i=1;
-    toLog(level,"List of clients:\n");
+    //toLog(level,"List of clients:\n");
     struct CliConn *c;
     client_start();
     while((c=client_next()) != NULL)
@@ -216,7 +216,7 @@ void client_list(int level)
 
         diffsec_to_str(now - c->created,dt1,64);
         diffsec_to_str(now - c->firstc,dt2,64);
-
+        /*
         toLog(level,"#%d - <%d> info: %s S:%s Err: %d Messages: %d Reinit: %d SSL:%s\n",
                         i,c->descr,c->info,client_status_name[c->status],c->err,c->message,c->reinit,
                         (c->cio == NULL?"No":"Yes"));
@@ -226,6 +226,26 @@ void client_list(int level)
         if(cio_info_text(c,ciobuf,512))
             toLog(level,"  %s\n",ciobuf);
         toLog(level,"  Subscribes: %s\n",sbuf);
+        */
+
+        char first_string[800];
+        sprintf(first_string, "#%d - <%d> info: %s S:%s Err: %d Messages: %d Reinit: %d SSL:%s\n",
+                        i,c->descr,c->info,client_status_name[c->status],c->err,c->message,c->reinit,
+                        (c->cio == NULL?"No":"Yes"));
+        send(fd, first_string, strlen(first_string), 0);
+
+        char second_string[800];
+        sprintf(second_string, "Connection time: %s  Handshaked time: %s UniqId:%s\n",dt2,dt1,c->uniq_id);
+        send(fd, second_string, strlen(second_string), 0);
+
+/*
+        if(strlen(c->agent) > 0)
+            toLog(level,"  Agent: %s\n",c->agent);
+        if(cio_info_text(c,ciobuf,512))
+            toLog(level,"  %s\n",ciobuf);
+        toLog(level,"  Subscribes: %s\n",sbuf);
+*/
+
         ++i;
     }
 }

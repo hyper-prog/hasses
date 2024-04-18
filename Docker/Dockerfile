@@ -13,7 +13,6 @@ RUN apk add libc-dev gcc make openssl-dev \
 
 
 FROM alpine AS hassesdaemon
-LABEL maintainer="hyper80@gmail.com" Description="Hasses asynchronous SSE server"
 RUN apk update && apk add openssl
 COPY --from=hassesbuildstage /usr/local/bin/hasses /usr/local/bin/
 

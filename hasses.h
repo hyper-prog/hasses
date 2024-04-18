@@ -58,12 +58,12 @@ size_t h_strlcpy(char *dest, const char *src, size_t size);
 void toLog(int level, const char * format, ...);
 void checkTimeouts(void);
 int close_client(int d);
-int commands(char *input);
+int commands(char *input, int fd);
 int get_reinit_allowed(void);
 void diffsec_to_str(int diff_sec,char *buffer,int max);
 void beforeExit(void);
-void parse_comm_messages(char *fms);
-void parse_comm_message(char *fm);
+void parse_comm_messages(char *fms, int fd);
+void parse_comm_message(char *fm, int fd);
 
 struct CommCli {
     int fd;
