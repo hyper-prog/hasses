@@ -898,7 +898,7 @@ int main(int argi,char **argc)
 
                 chop(input);
                 toLog(2,"#FIFO received message: \"%s\"\n",input);
-                parse_comm_messages(input, fifo);
+                parse_comm_messages(input, events[i].data.fd);
             }
             else
             {
@@ -1062,10 +1062,28 @@ void parse_comm_message(char *fm, int fd)
 
 int commands(char *input, int fd)
 {
+    if(strstr(input, "num_clients") != NULL) {
+        
+        if(strcmp(input,"num_clients") == 0) {
+
+            char num_clients_string[20];
+            sprintf(num_clients_string, "%d", client_count());
+            send(fd, num_clients_string, strlen(num_clients_string), 0);
+
+        } else if(strstr(input, "num_clients:") != NULL) {
+
+            char *sub = input + 12;
+
+            char num_clients_string[20];
+            sprintf(num_clients_string, "%d", sub_count(sub));
+            send(fd, num_clients_string, strlen(num_clients_string), 0);
+        }
+    }
+
     if(strcmp(input,"clientlist") == 0)
     {
         toLog(0,"------- requested client list -------\n");
-        client_list(0, fd);
+        client_list(0);
         toLog(0,"---------------- end ----------------\n");
         return 1;
     }

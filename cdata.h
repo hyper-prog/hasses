@@ -22,7 +22,7 @@ struct CliSubsribe
 
 struct CliConn
 {
-    int    descr;     //socket desctiptor
+    int    descr;     //socket descriptor
     void   *cio;      //cio stuff
 
     char   info[64];  //ip & port
@@ -50,8 +50,9 @@ struct CliConn * client_add(int descr);
 int client_del(int descr);
 
 int client_count(void);
+int sub_count(char *sub_to_search);
 int client_count_commstate(void);
-void client_list(int level, int fd);
+void client_list(int level);
 
 void client_subscribe_add   (struct CliConn *cli,char *ss);
 int  client_subscribe_exists(struct CliConn *cli,char *ss,int mmatch,char *rejectId);
