@@ -11,6 +11,8 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    environment: 
+      name: prod-to-dockerhub
 
     steps:
     - name: Checkout code
@@ -19,8 +21,8 @@ jobs:
     - name: Login to DockerHub
       uses: docker/login-action@v3
       with:
-        username: ${{ secrets.ENV_DOCKERHUB_USERNAME }}
-        password: ${{ secrets.ENV_DOCKERHUB_TOKEN }}
+        username: ${{ secrets.PTDH_DOCKERHUB_USERNAME }}
+        password: ${{ secrets.PTDH_DOCKERHUB_TOKEN }}
 
     - name: Extract metadata (tags, labels) for Docker
       id: meta
