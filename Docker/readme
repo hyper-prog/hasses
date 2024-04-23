@@ -1,2 +1,0 @@
-docker build -t adam7288/hasses -f ./Docker/Dockerfile .
-docker push adam7288/hasses

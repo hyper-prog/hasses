@@ -5,7 +5,7 @@
 #ifndef HASSES_HASSES_H
 #define HASSES_HASSES_H
 
-#define VERSION "1.26"
+#define VERSION "1.30"
 
 /* The client timeout check interval in seconds */ 
 #define CLIENT_CHK_TIME_INTERVAL  60
@@ -24,6 +24,8 @@
 
 /* Maximum reading message size, from network side. (Url req, etc) */
 #define MAX_READ_SIZE    6144
+
+#define NON_TCP_SENDER   -1
 
 struct Hasses_Settings
 {
@@ -58,12 +60,12 @@ size_t h_strlcpy(char *dest, const char *src, size_t size);
 void toLog(int level, const char * format, ...);
 void checkTimeouts(void);
 int close_client(int d);
-int commands(char *input, int fd);
+int commands(char *input, int sender_fd);
 int get_reinit_allowed(void);
 void diffsec_to_str(int diff_sec,char *buffer,int max);
 void beforeExit(void);
-void parse_comm_messages(char *fms, int fd);
-void parse_comm_message(char *fm, int fd);
+void parse_comm_messages(char *fms, int sender_fd);
+void parse_comm_message(char *fm, int sender_fd);
 
 struct CommCli {
     int fd;

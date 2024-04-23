@@ -188,27 +188,23 @@ int client_count(void)
     return c;
 }
 
-int sub_count(char *sub_to_search)
+int subscribed_client_count(char *sub_to_search)
 {
-    toLog(0,sub_to_search);
-
     int i=0;
     client_start();
-    while(client_next()) {
-
+    while(client_next())
+    {
         struct CliSubsribe *sub = client_current()->subs;
-        while(sub != NULL) {
-
-            if(strcmp(sub->token, sub_to_search) == 0) {
-
+        while(sub != NULL)
+        {
+            if(strcmp(sub->token, sub_to_search) == 0)
+            {
                 ++i;
                 break;
             }
-
             sub = sub->next;
         }
     }
-
     return i;
 }
 
@@ -231,7 +227,7 @@ void client_list(int level)
     time_t now=time(NULL);
 
     int i=1;
-    //toLog(level,"List of clients:\n");
+    toLog(level,"List of clients:\n");
     struct CliConn *c;
     client_start();
     while((c=client_next()) != NULL)
@@ -240,7 +236,7 @@ void client_list(int level)
 
         diffsec_to_str(now - c->created,dt1,64);
         diffsec_to_str(now - c->firstc,dt2,64);
-      
+
         toLog(level,"#%d - <%d> info: %s S:%s Err: %d Messages: %d Reinit: %d SSL:%s\n",
                         i,c->descr,c->info,client_status_name[c->status],c->err,c->message,c->reinit,
                         (c->cio == NULL?"No":"Yes"));
@@ -250,7 +246,6 @@ void client_list(int level)
         if(cio_info_text(c,ciobuf,512))
             toLog(level,"  %s\n",ciobuf);
         toLog(level,"  Subscribes: %s\n",sbuf);
-
         ++i;
     }
 }

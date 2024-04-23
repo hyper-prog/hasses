@@ -215,12 +215,17 @@ int printhelp(void)
                    "        [-cors-base=<URL>] [-ra] [-user=<USER>] [-nodaemon]\n"
            "Commands on communication channel or fifo file:\n"
            "  \"status\" - Print status/statistics to the log\n"
+           "  \"tcpstatus\" - Send status/statistics back to the sender\n"
            "  \"clientlist\" - List clients to the log\n"
            "  \"loglevel_quiet\" - Set loglevel to minimal\n"
            "  \"loglevel_normal\" - Set loglevel to normal\n"
            "  \"loglevel_debug\" - Set loglevel to maximum\n"
+           "  \"numberofclients\" - Print number of clients to the log\n"
+           "  \"tcpnumberofclients\" - Send number of clients back to the sender\n"
            "  \"reinit_enable\" - Enable re-initialize opened connections\n"
            "  \"reinit_disable\" - Enable re-initialize opened connections\n"
+           "  \"subscribedclients:<sub>\" - Print number of the subscribed clients to the log\n"
+           "  \"tcpsubscribedclients:<sub>\" - Send  number of the subscribed clients to back\n"
            "  \"<token>=<message>\" - Send message to the subscribers of <token>\n"
            "  \"<token>=<message>;<token2>=<message2>\" - Send more messages\n"
            "  \"<token>-<rId>=<message>\" - Send message to the subscribers of <token> except <rId>\n"
@@ -898,7 +903,7 @@ int main(int argi,char **argc)
 
                 chop(input);
                 toLog(2,"#FIFO received message: \"%s\"\n",input);
-                parse_comm_messages(input, events[i].data.fd);
+                parse_comm_messages(input, NON_TCP_SENDER);
             }
             else
             {
@@ -1034,7 +1039,7 @@ int commclient_check(int fd)
 }
 
 //split by delimiter hsettings.delimiter and call parse_comm_message on parts
-void parse_comm_messages(char *fms, int fd)
+void parse_comm_messages(char *fms, int sender_fd)
 {
     char *in_part=fms;
     int ii,input_length = strlen(fms);
@@ -1042,17 +1047,17 @@ void parse_comm_messages(char *fms, int fd)
         if(fms[ii] == hsettings.delimiter[0])
         {
             fms[ii] = '\0';
-            parse_comm_message(in_part, fd);
+            parse_comm_message(in_part, sender_fd);
             in_part = fms + ii + 1;
         }
-    parse_comm_message(in_part, fd);
+    parse_comm_message(in_part, sender_fd);
 }
 
-void parse_comm_message(char *fm, int fd)
+void parse_comm_message(char *fm, int sender_fd)
 {
     if(strlen(fm) == 0)
         return;
-    if(!commands(fm, fd))
+    if(!commands(fm, sender_fd))
     {
         toLog(2,"Sending message to connected&subscribed clients...\n");
         sendmessages(fm);
@@ -1060,24 +1065,39 @@ void parse_comm_message(char *fm, int fd)
     }
 }
 
-int commands(char *input, int fd)
+int commands(char *input, int sender_fd)
 {
-    if(strstr(input, "num_clients") != NULL) {
-        
-        if(strcmp(input,"num_clients") == 0) {
+    if(strncmp(input,"numberofclients",16) == 0)
+    {
+        toLog(0,"Number of connected clients: %d\n",client_count());
+        return 1;
+    }
 
-            char num_clients_string[20];
-            sprintf(num_clients_string, "%d", client_count());
-            send(fd, num_clients_string, strlen(num_clients_string), 0);
+    if(strncmp(input,"tcpnumberofclients",19) == 0 && sender_fd != NON_TCP_SENDER)
+    {
+        toLog(0,"Number of connected clients: %d\n",client_count());
+        char num_clients_json[64];
+        snprintf(num_clients_json,64,"{\"numberofclients\": %d}", client_count());
+        send(sender_fd, num_clients_json, strlen(num_clients_json), 0);
+        return 1;
+    }
 
-        } else if(strstr(input, "num_clients:") != NULL) {
+    if(!strncmp(input,"subscribedclients:",18) && strlen(input) > 18)
+    {
+        char *sub = input + 18;
 
-            char *sub = input + 12;
+        toLog(0,"Client count subscribed for \"%s\": %d\n",sub,subscribed_client_count(sub));
+        return 1;
+    }
 
-            char num_clients_string[20];
-            sprintf(num_clients_string, "%d", sub_count(sub));
-            send(fd, num_clients_string, strlen(num_clients_string), 0);
-        }
+    if(!strncmp(input,"tcpsubscribedclients:",21) && strlen(input) > 21 && strlen(input) < (128+21) && sender_fd != NON_TCP_SENDER)
+    {
+        char *sub = input + 21;
+
+        char sub_clients_json[256];
+        snprintf(sub_clients_json,256,"{\"subscribedclients\": %d, \"subscribedfor\": \"%s\"}", subscribed_client_count(sub),sub);
+        send(sender_fd, sub_clients_json, strlen(sub_clients_json), 0);
+        return 1;
     }
 
     if(strcmp(input,"clientlist") == 0)
@@ -1146,6 +1166,35 @@ int commands(char *input, int fd)
         toLog(0,"Total message processed: %lu\n",stats.allmessage);
         toLog(0,"Total message sent: %lu\n",stats.allsmessage);
         toLog(0,"------------- end --------------\n");
+        return 1;
+    }
+
+    if(strcmp(input,"tcpstatus") == 0 && sender_fd != NON_TCP_SENDER)
+    {
+        char rtstr[64];
+        diffsec_to_str(time(NULL)-stats.startDaemon,rtstr,64);
+
+        char status_json[1024];
+        snprintf(status_json,1024,
+                    "{\"version\": \"%s\","
+                    "\"runningtime\": \"%s\","
+                    "\"mode\": \"%s\","
+                    "\"loglevel\": %d,"
+                    "\"allconncli\": %d,"
+                    "\"sseconncli\": %d,"
+                    "\"maxconncli\": %ld,"
+                    "\"msgproccnt\": %ld,"
+                    "\"msgsendcnt\": %ld}",
+                    VERSION,
+                    rtstr,
+                    (hsettings.use_ssl?"SSL encrypted (https)":"unencrypted (http)"),
+                    hsettings.loglevel,
+                    client_count(),
+                    client_count_commstate(),
+                    stats.maxclients,
+                    stats.allmessage,
+                    stats.allsmessage);
+        send(sender_fd, status_json, strlen(status_json), 0);
         return 1;
     }
     return 0;

@@ -50,7 +50,7 @@ struct CliConn * client_add(int descr);
 int client_del(int descr);
 
 int client_count(void);
-int sub_count(char *sub_to_search);
+int subscribed_client_count(char *sub_to_search);
 int client_count_commstate(void);
 void client_list(int level);
 
