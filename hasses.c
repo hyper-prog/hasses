@@ -898,7 +898,7 @@ int main(int argi,char **argc)
 
                 chop(input);
                 toLog(2,"#FIFO received message: \"%s\"\n",input);
-                parse_comm_messages(input);
+                parse_comm_messages(input, events[i].data.fd);
             }
             else
             {
@@ -946,7 +946,7 @@ int main(int argi,char **argc)
                         {
                             chop(input);
                             toLog(2,"#COMM-TCP last received message: \"%s\"\n",input);
-                            parse_comm_messages(input);
+                            parse_comm_messages(input, events[i].data.fd);
                         }
                         close_communication_client(events[i].data.fd);
                     }
@@ -954,7 +954,7 @@ int main(int argi,char **argc)
                     {
                         chop(input);
                         toLog(2,"#COMM-TCP received message: \"%s\"\n",input);
-                        parse_comm_messages(input);
+                        parse_comm_messages(input, events[i].data.fd);
                     }
                 }
                 else //sse client
@@ -1034,7 +1034,7 @@ int commclient_check(int fd)
 }
 
 //split by delimiter hsettings.delimiter and call parse_comm_message on parts
-void parse_comm_messages(char *fms)
+void parse_comm_messages(char *fms, int fd)
 {
     char *in_part=fms;
     int ii,input_length = strlen(fms);
@@ -1042,17 +1042,17 @@ void parse_comm_messages(char *fms)
         if(fms[ii] == hsettings.delimiter[0])
         {
             fms[ii] = '\0';
-            parse_comm_message(in_part);
+            parse_comm_message(in_part, fd);
             in_part = fms + ii + 1;
         }
-    parse_comm_message(in_part);
+    parse_comm_message(in_part, fd);
 }
 
-void parse_comm_message(char *fm)
+void parse_comm_message(char *fm, int fd)
 {
     if(strlen(fm) == 0)
         return;
-    if(!commands(fm))
+    if(!commands(fm, fd))
     {
         toLog(2,"Sending message to connected&subscribed clients...\n");
         sendmessages(fm);
@@ -1060,8 +1060,26 @@ void parse_comm_message(char *fm)
     }
 }
 
-int commands(char *input)
+int commands(char *input, int fd)
 {
+    if(strstr(input, "num_clients") != NULL) {
+        
+        if(strcmp(input,"num_clients") == 0) {
+
+            char num_clients_string[20];
+            sprintf(num_clients_string, "%d", client_count());
+            send(fd, num_clients_string, strlen(num_clients_string), 0);
+
+        } else if(strstr(input, "num_clients:") != NULL) {
+
+            char *sub = input + 12;
+
+            char num_clients_string[20];
+            sprintf(num_clients_string, "%d", sub_count(sub));
+            send(fd, num_clients_string, strlen(num_clients_string), 0);
+        }
+    }
+
     if(strcmp(input,"clientlist") == 0)
     {
         toLog(0,"------- requested client list -------\n");
