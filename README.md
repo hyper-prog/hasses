@@ -100,16 +100,22 @@ To the enabled site inside the "server" section:
 
 If you would like get informations about the hasses internal state, get statistics or client information you can send commands
 to the hasses communication channel to modify the internal state, or get information to the log output.
+It also possible the receive information on communication channels. (with "tcp" prefixed commands, these command are replied in json format)
 
 These commands are:
 
     "status" - Print status/statistics to the log
+    "tcpstatus" - Send status/statistics back to the sender on communication channel
     "clientlist" - List clients to the log
     "loglevel_quiet" - Set loglevel to minimal
     "loglevel_normal" - Set loglevel to normal
     "loglevel_debug" - Set loglevel to maximum
+    "numberofclients" - Print number of clients to the log
+    "tcpnumberofclients" - Send number of clients back to the sender on communication channel
     "reinit_enable" - Enable re-initialize opened connections
     "reinit_disable" - Enable re-initialize opened connections
+    "subscribedclients:<sub>" - Print number of the subscribed clients to the log
+    "tcpsubscribedclients:<sub>" - Send number of the subscribed clients back to the sender
     "<token>=<message>" - Send message to the subscribers of <token>
     "<token>=<message>;<token2>=<message2>" - Send more messages
     "<token>-<rId>=<message>" - Send message to the subscribers of <token> except <rId>

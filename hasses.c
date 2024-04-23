@@ -225,7 +225,7 @@ int printhelp(void)
            "  \"reinit_enable\" - Enable re-initialize opened connections\n"
            "  \"reinit_disable\" - Enable re-initialize opened connections\n"
            "  \"subscribedclients:<sub>\" - Print number of the subscribed clients to the log\n"
-           "  \"tcpsubscribedclients:<sub>\" - Send  number of the subscribed clients to back\n"
+           "  \"tcpsubscribedclients:<sub>\" - Send number of the subscribed clients back to the sender\n"
            "  \"<token>=<message>\" - Send message to the subscribers of <token>\n"
            "  \"<token>=<message>;<token2>=<message2>\" - Send more messages\n"
            "  \"<token>-<rId>=<message>\" - Send message to the subscribers of <token> except <rId>\n"
