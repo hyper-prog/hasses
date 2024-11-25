@@ -20,6 +20,6 @@ COPY --from=hassesbuildstage /usr/local/bin/hasses /usr/local/bin/
 EXPOSE 8080
 EXPOSE 8085
 
-CMD ["-p=8080","-cp=8085","-murl=/sse","-nodaemon"]
+CMD ["-p=8080","-cp=8085","-murl=/sse","-nodaemon","-cors-base=*","-q"]
 # Srart hasses daemon when container runs
 ENTRYPOINT ["/usr/local/bin/hasses"]
